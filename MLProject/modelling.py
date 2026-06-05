@@ -12,7 +12,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
 # =====================================================
-# MLflow Tracking URI
+# MLflow Tracking URI (DagsHub)
 # =====================================================
 
 tracking_uri = os.getenv("MLFLOW_TRACKING_URI")
@@ -73,78 +73,71 @@ accuracy = accuracy_score(
 )
 
 # =====================================================
-# MLflow Experiment
+# MLflow Logging
 # =====================================================
 
-mlflow.set_experiment(
-    "Titanic-CI"
-)
+active_run = mlflow.active_run()
 
-with mlflow.start_run(
-    run_name="RandomForest_CI"
-) as run:
-
-    # ===============================================
-    # Save Run ID
-    # ===============================================
-
+if active_run:
+    run_id = active_run.info.run_id
+else:
+    run = mlflow.start_run()
     run_id = run.info.run_id
 
-    with open(
-        "run_id.txt",
-        "w"
-    ) as f:
-        f.write(run_id)
+# =====================================================
+# Save Run ID
+# =====================================================
 
-    mlflow.log_artifact(
-        "run_id.txt"
-    )
+with open(
+    "run_id.txt",
+    "w"
+) as f:
+    f.write(run_id)
 
-    # ===============================================
-    # Parameters
-    # ===============================================
+mlflow.log_artifact(
+    "run_id.txt"
+)
 
-    mlflow.log_params(
-        grid.best_params_
-    )
+# =====================================================
+# Log Parameters
+# =====================================================
 
-    # ===============================================
-    # Metrics
-    # ===============================================
+mlflow.log_params(
+    grid.best_params_
+)
 
-    mlflow.log_metric(
-        "accuracy",
-        accuracy
-    )
+# =====================================================
+# Log Metrics
+# =====================================================
 
-    # ===============================================
-    # Model Artifact (MLflow)
-    # ===============================================
+mlflow.log_metric(
+    "accuracy",
+    accuracy
+)
 
-    mlflow.sklearn.log_model(
-        sk_model=best_model,
-        artifact_path="model"
-    )
+# =====================================================
+# Log Model to MLflow Artifact Store
+# =====================================================
 
-    # ===============================================
-    # Local Saved Model
-    # ===============================================
+mlflow.sklearn.log_model(
+    sk_model=best_model,
+    artifact_path="model"
+)
 
-    mlflow.sklearn.save_model(
-        sk_model=best_model,
-        path="saved_model"
-    )
+# =====================================================
+# Save Local Model
+# =====================================================
 
-    print(
-        f"Run ID: {run_id}"
-    )
+mlflow.sklearn.save_model(
+    sk_model=best_model,
+    path="saved_model"
+)
 
-    print(
-        f"Best Params: {grid.best_params_}"
-    )
+# =====================================================
+# Console Output
+# =====================================================
 
-    print(
-        f"Accuracy: {accuracy:.4f}"
-    )
-
+print(f"Run ID: {run_id}")
+print(f"Best Params: {grid.best_params_}")
+print(f"Accuracy: {accuracy:.4f}")
 print("Training completed successfully.")
